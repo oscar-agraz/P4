@@ -103,6 +103,21 @@ compute_mfcc() {
     done
 }
 
+#compute_olddelta() {
+#    for filename in $(cat $lists/class/all.train $lists/class/all.test); do
+#        mkdir -p `dirname $w/$FEAT/$filename.$FEAT`
+#        EXEC="wav2olddelta 16 24 $db/$filename.wav $w/$FEAT/$filename.mfcc $w/$FEAT/$filename.delta_raw $w/$FEAT/$filename.$FEAT"
+#        echo $EXEC && $EXEC || exit 1
+#    done
+
+compute_delta() {
+    for filename in $(cat $lists/class/all.train $lists/class/all.test); do
+        mkdir -p `dirname $w/$FEAT/$filename.$FEAT`
+        EXEC="wav2delta 16 24 $db/$filename.wav $w/$FEAT/$filename.mfcc $w/$FEAT/$filename.delta_raw $w/$FEAT/$filename.static $w/$FEAT/$filename.d1 $w/$FEAT/$filename.d2"
+        echo $EXEC && $EXEC || exit 1
+    done
+}
+
 #Falta compute lpcc y mfcc
 
 
@@ -135,10 +150,31 @@ for cmd in $*; do
        for dir in $db/BLOCK*/SES* ; do
            name=${dir/*\/}
            echo $name ----
-           gmm_train -v 1 -T 0.0001 -N5 -i 2 -d $w/$FEAT -e $FEAT -m 15 -g $w/gmm/$FEAT/$name.gmm -N 20 $lists/class/$name.train || exit 1
+           gmm_train -v 1 -T 0.00001 -N 10000 -i 2 -d $w/$FEAT -e $FEAT -m 64 -g $w/gmm/$FEAT/$name.gmm $lists/class/$name.train || exit 1
            echo
        done
-   elif [[ $cmd == test ]]; then
+
+    elif [[ $cmd == train_delta ]]; then
+        for dir in $db/BLOCK*/SES* ; do
+           name=${dir/*\/}
+           echo $name ----
+           gmm_train -v 1 -T 0.00001 -N 10000 -i 2 -d $w/delta -e static -m 64 -g $w/gmm/static/$name.gmm $lists/class/$name.train || exit 1
+           echo
+       done
+        for dir in $db/BLOCK*/SES* ; do
+           name=${dir/*\/}
+           echo $name ----
+           gmm_train -v 1 -T 0.00001 -N 10000 -i 2 -d $w/delta -e d1 -m 64 -g $w/gmm/d1/$name.gmm $lists/class/$name.train || exit 1
+           echo
+       done
+        for dir in $db/BLOCK*/SES* ; do
+           name=${dir/*\/}
+           echo $name ----
+           gmm_train -v 1 -T 0.00001 -N 10000 -i 2 -d $w/delta -e d2 -m 64 -g $w/gmm/d2/$name.gmm $lists/class/$name.train || exit 1
+           echo
+       done
+
+    elif [[ $cmd == test ]]; then
        #find $w/gmm/$FEAT -name '*.gmm' -printf '%P\n' | perl -pe 's/.gmm$//' | sort  > $lists/gmm.list
        (gmm_classify -d $w/$FEAT -e $FEAT -D $w/gmm/$FEAT -E gmm $lists/gmm.list  $lists/class/all.test | tee $w/class_${FEAT}_${name_exp}.log) || exit 1
 
@@ -159,7 +195,7 @@ for cmd in $*; do
 	   # Implement 'trainworld' in order to get a Universal Background Model for speaker verification
 	   #
 	   # - The name of the world model will be used by gmm_verify in the 'verify' command below.
-           gmm_train -i 2 -d $w/$FEAT -e $FEAT -m 15 -g $w/gmm/$FEAT/world.gmm -N 20 $lists/verif/users_and_others.train || exit 1
+           gmm_train -v 1 -T 0.00001 -N 10000 -i 2 -d $w/$FEAT -e $FEAT -m 64 -g $w/gmm/$FEAT/world.gmm $lists/verif/users_and_others.train || exit 1
        # \DONE
 
    elif [[ $cmd == verify ]]; then
@@ -200,7 +236,7 @@ for cmd in $*; do
        done  
 
 
-       find $w/gmm/$FEAT -name '*.gmm' -printf '%P\n' | perl -pe 's/.gmm$//' | sort  > $lists/gmm.list
+       #find $w/gmm/$FEAT -name '*.gmm' -printf '%P\n' | perl -pe 's/.gmm$//' | sort  > $lists/gmm.list
        (gmm_classify -d $w/final -e $FEAT -D $w/gmm/$FEAT -E gmm $lists/gmm.list  $lists/final/class.test | tee $w/class_test.log) || exit 1
 
        if [[ ! -s $w/class_test.log ]] ; then
@@ -224,15 +260,23 @@ for cmd in $*; do
 	   # is lists/final/verif.test, and the list of users claimed by the test files is
 	   # lists/final/verif.test.candidates
        #echo "To be implemented ..."
+        #for filename in $(cat $lists/final/verif.test); do
+         #   mkdir -p `dirname $w/final/$filename.lpcc`
+          #  EXEC="wav2lpcc 8 13 spk_ima/sr_test/$filename.wav $w/final/$filename.lpcc"
+           # echo $EXEC && $EXEC || exit 1
+       #done  
 
-       gmm_verify  -d $w/$FEAT -e $FEAT -D $w/gmm/$FEAT -E gmm  -w world $lists/gmm.list  $lists/final/verif.test $lists/final/verif.test.candidates | tee $w/verif_test.log
+       gmm_verify  -d $w/final -e $FEAT -D $w/gmm/$FEAT -E gmm  -w world $lists/gmm.list  $lists/final/verif.test $lists/final/verif.test.candidates | tee $w/verif_pre_test.log 
+       
+       perl -ane 'print "$F[0]\t$F[1]\t"; if ($F[2] > -3.214) {print "1\n"} else {print "0\n"}' $w/verif_pre_test.log | tee $w/verif_test.log
 
        if [[ ! -s $w/verif_test.log ]] ; then
           echo "ERROR: $w/verif_test.log not created"
           exit 1
        fi
 
-       spk_verif_score $w/verif_test.log | tee $w/verif_test.res
+       spk_verif_score $w/verif_pre_test.log | tee $w/verif_test.res
+       
 
        
    

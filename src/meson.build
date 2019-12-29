@@ -8,6 +8,10 @@ sources = [
     'pearson/pearson.cpp',
     'fmatrix/fmatrix_cut.cpp',
     'fmatrix/fmatrix_show.cpp',
+    'fmatrix/fmatrix_delta.cpp',
+    'fmatrix/fmatrix_delta_static.cpp',
+    'fmatrix/fmatrix_delta_dynamic_1.cpp',
+    'fmatrix/fmatrix_delta_dynamic_2.cpp',
 ]
 
 foreach src: sources
