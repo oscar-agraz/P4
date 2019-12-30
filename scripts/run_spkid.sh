@@ -260,11 +260,11 @@ for cmd in $*; do
 	   # is lists/final/verif.test, and the list of users claimed by the test files is
 	   # lists/final/verif.test.candidates
        #echo "To be implemented ..."
-        #for filename in $(cat $lists/final/verif.test); do
-         #   mkdir -p `dirname $w/final/$filename.lpcc`
-          #  EXEC="wav2lpcc 8 13 spk_ima/sr_test/$filename.wav $w/final/$filename.lpcc"
-           # echo $EXEC && $EXEC || exit 1
-       #done  
+        for filename in $(cat $lists/final/verif.test); do
+            mkdir -p `dirname $w/final/$filename.mfcc`
+            EXEC="wav2mfcc 16 24 spk_ima/sr_test/$filename.wav $w/final/$filename.mfcc"
+            echo $EXEC && $EXEC || exit 1
+       done  
 
        gmm_verify  -d $w/final -e $FEAT -D $w/gmm/$FEAT -E gmm  -w world $lists/gmm.list  $lists/final/verif.test $lists/final/verif.test.candidates | tee $w/verif_pre_test.log 
        
