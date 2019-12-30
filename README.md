@@ -121,7 +121,8 @@ Número de filtros: 24
 
   |            |   LP   |  LPCC  |  MFCC  |
   |------------|:------:|:------:|:------:|
-  | Error rate |  4.46% |  6.15% | 42.55% |
+  | Error rate |  4.46% |  6.15% |  1.40% |
+
 
 
 ### Verificación del locutor.
@@ -133,10 +134,10 @@ Número de filtros: 24
 
   |                 |    LP   |   LPCC  |   MFCC  |
   |-----------------|:-------:|:-------:|:-------:|
-  | Umbral          |  1.213  |  1.412  |  2.487  |
+  | Umbral          |  1.213  |  1.412  |  1.400  |
   | Falsas alarmas  |  0/1000 |  0/1000 |  0/1000 |
-  | Pérdidas        | 197/250 | 169/250 | 169/250 |
-  | Score           |   78.8  |   67.6  |   96.4  |
+  | Pérdidas        | 197/250 | 169/250 | 121/250 |
+  | Score           |   78.8  |   67.6  |   48.4  |
   
 
 ### Test final y trabajo de ampliación.
