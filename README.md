@@ -124,6 +124,7 @@ Número de filtros: 24
   | Error rate |  4.46% |  6.15% |  1.40% |
 
 
+
 ### Verificación del locutor.
 
 - Inserte una tabla con el *score* obtenido con su mejor sistema de verificación del locutor en la tarea
